@@ -18,13 +18,13 @@ jobs:
 
       - name: Build and push backend
         run: |
-          docker build -t yourdockerhubusername/mean-backend ./backend
-          docker push yourdockerhubusername/mean-backend
+          docker build -t jangampriti0512/mean-backend ./backend
+          docker push jangampriti0512/mean-backend
 
       - name: Build and push frontend
         run: |
-          docker build -t yourdockerhubusername/mean-frontend ./frontend
-          docker push yourdockerhubusername/mean-frontend
+          docker build -t jangampriti0512/mean-frontend ./frontend
+          docker push jangampriti0512/mean-frontend
 
       - name: SSH to VM and deploy
         uses: appleboy/ssh-action@v0.1.6
