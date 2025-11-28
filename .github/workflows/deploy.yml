@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Login to Docker Hub
-        run: echo "${{ secrets.Pritijangam@123 }}" | docker login -u "${{ secrets.jangampriti0512 }}" --password-stdin
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Build and push backend
         run: |
