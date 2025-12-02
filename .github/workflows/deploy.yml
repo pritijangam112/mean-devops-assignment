@@ -35,4 +35,3 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/mean-frontend:latest
-``
