@@ -1,93 +1,21 @@
 
 name: CI/CD Pipeline
-
 on:
   push:
-    branches: [ "main" ]   # Change to "master" if your repo uses master
-
+    branches: [ "main" ]
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      # 1) Checkout repo
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      # 2) Set up Docker Buildx (optional, but safer for cross-platform builds)
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # 3) Login to Docker Hub
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # 4) Build & push backend
-      - name: Build and push backend
+      - name: Build and push images
         run: |
-          docker build -t jangampriti0512/mean-backend:latest ./backend
-          docker push jangampriti0512/mean-backend:latest
-
-      # 5) Build & push frontend
-      - name: Build and push frontend
-        run: |
-          docker build -t jangampriti0512/mean-frontend:latest ./frontend
-          docker push jangampriti0512/mean-frontend:latest
-
-      # 6) SSH to VM and deploy with Docker Compose
-      - name: SSH to VM and deploy
-        uses: appleboy/ssh-action@v0.1.6
-        with:
-          host: ${{ secrets.VM_HOST }}         # e.g., 13.233.xx.xx or DNS
-          username: ${{ secrets.VM_USER }}     # e.g., ubuntu
-          key: ${{ secrets.VM_KEY }}           # private key (PEM content)
-          port: 22
-          timeout: 30s
-          command_timeout: 20m                 # allow time for pulls
-          script_stop: true
-          debug: true
-          script: |
-            set -euxo pipefail
-
-            # ---- Ensure Docker & Compose are available ----
-            if ! command -v docker >/dev/null 2>&1; then
-              echo "Docker not found. Installing Docker..."
-              # Install Docker (Ubuntu)
-              sudo apt-get update -y
-              sudo apt-get install -y ca-certificates curl gnupg
-              sudo install -m 0755 -d /etc/apt/keyrings
-              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-              sudo chmod a+r /etc/apt/keyrings/docker.gpg
-              echo \
-                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-                $(. /etc/os-release && echo $VERSION_CODENAME) stable" | \
-                sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-              sudo apt-get update -y
-              sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-              sudo systemctl enable --now docker
-            fi
-
-            # Prefer the docker compose plugin; fall back to legacy binary if absent
-            if ! docker compose version >/dev/null 2>&1; then
-              echo "docker compose plugin not found. Checking legacy docker-compose..."
-              if ! command -v docker-compose >/dev/null 2>&1; then
-                echo "Installing legacy docker-compose..."
-                sudo apt-get update -y
-                sudo apt-get install -y docker-compose
-              fi
-            fi
-
-            # ---- Deploy ----
-            cd /home/ubuntu/mean-deploy
-
-            # Pull latest images
-            sudo docker compose pull || sudo docker-compose pull
-
-            # Start/update services
-            sudo docker compose up -d || sudo docker-compose up -d
-
-            # Show status for quick debugging
-            sudo docker compose ps || sudo docker-compose ps
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/mean-backend ./backend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/mean-frontend ./frontend
+          docker push ${{ secrets.DOCKER_USERNAME }}/mean-backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/mean-frontend
